@@ -18,7 +18,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const ADDRESS_KEY = "LastConnectedAddress";
-const DEFAULT_ADDRESS = "ws://0.0.0.0:3000";
+const DEFAULT_ADDRESS = "ws://192.168.1.149:2000";
 
 const ConnectForm: React.FC<{
     autoConnect: boolean;

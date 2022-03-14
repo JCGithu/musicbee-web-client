@@ -61,12 +61,21 @@ export class MusicBeeAPI {
 
         const { context, data } = parsedMessageData;
 
+        console.log("Message:", parsedMessageData);
+
+        if (context === 'nowplayingcover'){
+            //console.log('ablum!');
+            //console.log(parsedMessageData.data.cover);
+        }
+        
+
         if (this.eventListeners[context]) {
             for (const listener of this.eventListeners[context]) {
                 listener(data);
+                
             }
         } else if (process.env.NODE_ENV === "development") {
-            console.log("Message:", parsedMessageData);
+            //console.log("Message:", parsedMessageData);
         }
     };
 
@@ -78,6 +87,7 @@ export class MusicBeeAPI {
     addEventListener(message: string, listener: EventListener) {
         if (!this.eventListeners[message]) this.eventListeners[message] = [];
         this.eventListeners[message].push(listener);
+        console.log(message);
     }
 
     removeEventListener(message: string, listener: EventListener) {

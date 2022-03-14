@@ -1,8 +1,6 @@
 import { makeStyles } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
-import MainWindow from "./MainWindow";
 import { MusicBeeAPI, MusicBeeAPIContext } from "../Logic/MusicBeeAPI";
-import NowPlayingList from "./NowPlayingList";
 import PlayerControls from "../Components/PlayerControls";
 import { MusicBeeInfoProvider } from "../Logic/MusicBeeInfo";
 import ConnectForm from "./ConnectForm";
@@ -58,11 +56,7 @@ const Controller: React.FC<{}> = () => {
             {API ? (
                 <MusicBeeAPIContext.Provider value={API}>
                     <MusicBeeInfoProvider>
-                        <div className={classes.container}>
-                            <NowPlayingList />
-                            <MainWindow />
-                            <PlayerControls />
-                        </div>
+                        <PlayerControls />
                     </MusicBeeInfoProvider>
                 </MusicBeeAPIContext.Provider>
             ) : (

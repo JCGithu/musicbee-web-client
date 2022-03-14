@@ -1,32 +1,21 @@
-import { IconButton, makeStyles, Slider } from "@material-ui/core";
-import {
-    PlayArrow,
-    Pause,
-    VolumeUp,
-    SkipPrevious,
-    SkipNext,
-    Shuffle,
-    Headset,
-    Repeat,
-    RepeatOne,
-} from "@material-ui/icons";
-import React, { useContext, useEffect, useState } from "react";
+import { makeStyles, Slider } from "@material-ui/core";
+import React, { useContext, useEffect } from "react";
 import { MusicBeeInfoContext } from "../Logic/MusicBeeInfo";
 import { MusicBeeAPIContext } from "../Logic/MusicBeeAPI";
 import { millisecondsToTime, useObjectReducer } from "../Logic/Utils";
-import OverflowScroller from "./OverflowScroller";
+
+const backupImage = 'https://i0.wp.com/www.godisinthetvzine.co.uk/wp-content/uploads/2020/06/IMG_20200602_120716_501.jpg?fit=1080%2C1080&ssl=1'
 
 const useStyles = makeStyles(theme => ({
     bar: {
-        gridColumn: "1 / -1",
-        gridRow: "2 / 3",
-        height: "100%",
-        padding: "0 20px",
+        width: "470px",
+        height: "320px",
+        padding: "0.5rem",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: theme.palette.grey[800],
-        color: theme.palette.grey[300],
+        backgroundColor: "#ffffff",
+        color: "#232323"
     },
     seek: {
         margin: "0px 10px",
@@ -38,38 +27,23 @@ const useStyles = makeStyles(theme => ({
         marginLeft: 10,
         color: theme.palette.primary.main,
     },
-    buttonGroup: {
-        display: "flex",
-        alignItems: "center",
-        marginLeft: 20,
-    },
     seekContainer: {
         display: "flex",
         alignItems: "center",
-        width: "60%",
+        width: 410,
+        position: 'absolute',
+        left: 30,
+        top: 275,
         justifyContent: "start",
-        marginLeft: 20,
     },
     metadata: {
         display: "flex",
         flexDirection: "column",
-        width: 200,
-        overflow: "hidden",
-        position: "relative",
-    },
-    controlButtonGroup: {
-        display: "flex",
-        alignItems: "center",
-    },
-    controlButton: {
-        color: theme.palette.primary.main,
-        margin: "0 -5px",
-    },
-    onButton: {
-        color: theme.palette.primary.main,
-    },
-    offButton: {
-        color: theme.palette.common.white,
+        fontSize: 19,
+        top: 45,
+        left: 235,
+        width: `230px !important`,
+        position: "absolute",
     },
 }));
 
@@ -79,17 +53,16 @@ const PlayerControls: React.FC<{}> = () => {
     const API = useContext(MusicBeeAPIContext);
     const {
         nowPlayingTrack,
-        playerStatus: { playerShuffle, playerVolume, playerState, playerRepeat },
+        nowPlayingCover,
+        playerStatus: { playerState },
         trackTime: serverTrackTime,
     } = useContext(MusicBeeInfoContext);
 
     const [localTrackTime, setLocalTrackTime] = useObjectReducer({ current: 0, total: 0 });
-    const [localVolume, setLocalVolume] = useState(0);
 
     // Synchronize the local track time/volume whenever the host sends new info
     // (This is so the user can seek smoothly without sending new API calls every millisecond)
     useEffect(() => setLocalTrackTime({ ...serverTrackTime }), [serverTrackTime, setLocalTrackTime]);
-    useEffect(() => setLocalVolume(parseInt(playerVolume)), [playerVolume, setLocalVolume]);
 
     // Advance the seek bar every second
     useEffect(() => {
@@ -97,6 +70,7 @@ const PlayerControls: React.FC<{}> = () => {
         // (approximately - this gets reset every once in a while when the server synchronizes the time)
         const interval = setInterval(() => {
             if (playerState === "playing") {
+                //if (nowPlayingCover) console.log(nowPlayingCover);
                 setLocalTrackTime(prev => ({ current: Math.min(prev.current + 1000, prev.total) }));
             }
         }, 1000);
@@ -104,58 +78,25 @@ const PlayerControls: React.FC<{}> = () => {
         return () => clearInterval(interval);
     }, [setLocalTrackTime, playerState]);
 
-    useEffect(() => {
-        function handleKeyDown(e: KeyboardEvent) {
-            // Don't trigger events if the user is on an input field
-            // @ts-ignore
-            if (e.target?.matches('input[type="text"]')) {
-                return;
-            }
-
-            if (e.key === " ") {
-                API?.playPause();
-            }
-        }
-
-        document.addEventListener("keydown", handleKeyDown);
-        return () => document.removeEventListener("keydown", handleKeyDown);
-    }, [API]);
-
     return (
         <div className={classes.bar}>
+            <div id='album'>
+                {nowPlayingCover ? <img alt='cover' src={nowPlayingCover.cover ? `data:image/jpeg;base64,${nowPlayingCover.cover}` : backupImage}></img>: 'no art'}
+            </div>
             <div className={classes.metadata}>
                 {nowPlayingTrack ? (
                     <>
-                        <OverflowScroller>
-                            <b>{nowPlayingTrack.title}</b>
-                        </OverflowScroller>
-                        <OverflowScroller>
-                            <span>{nowPlayingTrack.artist}</span>
-                        </OverflowScroller>
-                        <OverflowScroller>
-                            <span>
-                                <i>{nowPlayingTrack.album}</i>
-                                {nowPlayingTrack.year ? ` (${nowPlayingTrack.year})` : ""}
-                            </span>
-                        </OverflowScroller>
+                        <h1>{nowPlayingTrack.title}</h1>
+                        <span>{nowPlayingTrack.artist}</span>
+                        <span>{nowPlayingTrack.album}</span>
+                        <span className="small">{nowPlayingTrack.year ? `\n ${nowPlayingTrack.year}` : ""}</span>
                     </>
                 ) : (
                     "(not playing)"
                 )}
             </div>
-            <div className={classes.controlButtonGroup}>
-                <IconButton onClick={() => API.skipPrevious()} className={classes.controlButton}>
-                    <SkipPrevious />
-                </IconButton>
-                <IconButton onClick={() => API.playPause()} className={classes.controlButton}>
-                    {playerState !== "playing" ? <PlayArrow /> : <Pause />}
-                </IconButton>
-                <IconButton onClick={() => API.skipNext()} className={classes.controlButton}>
-                    <SkipNext />
-                </IconButton>
-            </div>
             <div className={classes.seekContainer}>
-                {millisecondsToTime(localTrackTime.current)}
+                <h2>{millisecondsToTime(localTrackTime.current)}</h2>
                 <Slider
                     onChange={(_, value) => setLocalTrackTime({ current: value as number })}
                     onChangeCommitted={(_, value) => API.seek(value as number)}
@@ -163,33 +104,9 @@ const PlayerControls: React.FC<{}> = () => {
                     value={localTrackTime.current}
                     max={localTrackTime.total}
                 />
-                {millisecondsToTime(localTrackTime.total)}
+                <h2>{millisecondsToTime(localTrackTime.total)}</h2>
             </div>
-            <div className={classes.buttonGroup}>
-                <IconButton
-                    className={playerShuffle === "off" ? classes.offButton : classes.onButton}
-                    onClick={() => API.toggleShuffle()}
-                >
-                    {playerShuffle === "autodj" ? <Headset /> : <Shuffle />}
-                </IconButton>
-                <IconButton
-                    className={playerRepeat === "none" ? classes.offButton : classes.onButton}
-                    onClick={() => API.toggleRepeat()}
-                >
-                    {playerRepeat === "one" ? <RepeatOne /> : <Repeat />}
-                </IconButton>
-            </div>
-            <div className={classes.buttonGroup}>
-                <VolumeUp />
-                <Slider
-                    className={classes.volumeSlider}
-                    value={localVolume}
-                    max={100}
-                    onChange={(_, value) => setLocalVolume(value as number)}
-                    onChangeCommitted={(_, value) => API.setVolume(value as number)}
-                />
-                <span style={{ width: "1.3em" }}>{localVolume}</span>
-            </div>
+            <p id='playingData'>{nowPlayingTrack && JSON.stringify(nowPlayingTrack)}</p>
         </div>
     );
 };
